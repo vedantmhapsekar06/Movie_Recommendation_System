@@ -1,7 +1,7 @@
-Movie Recommendation System
+**Movie Recommendation System**
 A content-based movie recommender built with Python, Flask, and a clean web dashboard. Enter any movie title and instantly get similar movie suggestions powered by TF-IDF vectorization and cosine similarity.
 
- Features
+** Features**
 
  Smart autocomplete — search from thousands of movie titles in real time
  Content-based filtering — recommendations based on genre similarity using TF-IDF + cosine similarity
@@ -10,7 +10,7 @@ A content-based movie recommender built with Python, Flask, and a clean web dash
  CLI mode — run the recommender directly from the terminal without a browser
 
 
- Project Structure
+** Project Structure**
 movie-recommendation-system/
 │
 ├── app.py                  # Flask backend + API routes
@@ -19,7 +19,7 @@ movie-recommendation-system/
 └── movies_cleaned.csv      # Cleaned movie dataset
 └── requirements.txt        # requirements needed
 
- Getting Started
+ **Getting Started**
 1. Clone the repository
 bashgit clone https://github.com/your-username/movie-recommendation-system.git
 cd movie-recommendation-system
@@ -30,7 +30,7 @@ bashpython app.py
 Then open your browser at: http://localhost:5000
 The dashboard will load automatically.
 
- CLI Mode
+** CLI Mode**
 Prefer the terminal? Run the standalone recommender:
 bashpython movie_recommender.py
 Enter movie (or 'exit'): Toy Story
@@ -48,7 +48,7 @@ Top Recommendations:
    Score : 1.0
 ...
 
- API Endpoints
+** API Endpoints**
 MethodEndpointDescriptionGET/Serves the dashboardGET/api/moviesReturns all movie titles and genresGET/api/recommend?movie=<title>&n=<count>Returns top N similar moviesGET/api/statsReturns total movie count and top genres
 Example
 GET /api/recommend?movie=Toy Story&n=5
@@ -60,7 +60,7 @@ json{
   ]
 }
 
- How It Works
+** How It Works**
 
 Load — reads movies_cleaned.csv and drops rows with missing/invalid genres
 Preprocess — cleans genre strings and tokenizes them (e.g. "Action|Sci-Fi" → "action scifi")
@@ -72,10 +72,10 @@ Recommend — for a queried movie, returns the top N closest matches by similari
 A score of 1.0 means the genres are identical. A score of 0.0 means no shared genres.
 
 
- Tech Stack
+** Tech Stack**
 LayerTechnologyBackendPython, Flask, Flask-CORSMLscikit-learn (TF-IDF, Cosine Similarity)DatapandasFrontendHTML, CSS, Vanilla JavaScript
 
- Dataset
+** Dataset**
 The project uses movies_cleaned.csv — a pre-cleaned movie dataset with title and genres columns. Genres are pipe-separated (e.g. Action|Comedy|Drama).
 
 You can swap in your own dataset as long as it has title and genres columns.
