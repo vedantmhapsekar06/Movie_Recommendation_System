@@ -1,20 +1,20 @@
-# 🎬 Movie Recommendation System
+#  Movie Recommendation System
 
 A content-based movie recommender built with **Python**, **Flask**, and a clean web dashboard. Enter any movie title and instantly get similar movie suggestions powered by **TF-IDF vectorization** and **cosine similarity**.
 
 ---
 
-## ✨ Features
+##  Features
 
-- 🔍 **Smart autocomplete** — search from thousands of movie titles in real time
-- 🎯 **Content-based filtering** — recommendations based on genre similarity using TF-IDF + cosine similarity
-- 📊 **Interactive dashboard** — visualizes top genres, similarity scores, and dataset stats
-- 🖥️ **REST API** — clean Flask endpoints for movies, recommendations, and stats
-- ⚡ **CLI mode** — run the recommender directly from the terminal without a browser
+-  **Smart autocomplete** — search from thousands of movie titles in real time
+-  **Content-based filtering** — recommendations based on genre similarity using TF-IDF + cosine similarity
+-  **Interactive dashboard** — visualizes top genres, similarity scores, and dataset stats
+-  **REST API** — clean Flask endpoints for movies, recommendations, and stats
+-  **CLI mode** — run the recommender directly from the terminal without a browser
 
 ---
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 movie-recommendation-system/
@@ -27,7 +27,7 @@ movie-recommendation-system/
 
 ---
 
-## 🚀 Getting Started
+##  Getting Started
 
 ### 1. Clone the repository
 
@@ -54,7 +54,7 @@ The dashboard will load automatically.
 
 ---
 
-## 🖥️ CLI Mode
+##  CLI Mode
 
 Prefer the terminal? Run the standalone recommender:
 
@@ -81,7 +81,7 @@ Top Recommendations:
 
 ---
 
-## 🔌 API Endpoints
+##  API Endpoints
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
@@ -108,7 +108,7 @@ GET /api/recommend?movie=Toy Story&n=5
 
 ---
 
-## 🧠 How It Works
+##  How It Works
 
 1. **Load** — reads `movies_cleaned.csv` and drops rows with missing/invalid genres
 2. **Preprocess** — cleans genre strings and tokenizes them (e.g. `"Action|Sci-Fi"` → `"action scifi"`)
@@ -120,7 +120,7 @@ GET /api/recommend?movie=Toy Story&n=5
 
 ---
 
-## 🛠️ Tech Stack
+##  Tech Stack
 
 | Layer | Technology |
 |-------|-----------|
@@ -131,7 +131,7 @@ GET /api/recommend?movie=Toy Story&n=5
 
 ---
 
-## 📊 Dataset
+##  Dataset
 
 The project uses `movies_cleaned.csv` — a pre-cleaned movie dataset with `title` and `genres` columns. Genres are pipe-separated (e.g. `Action|Comedy|Drama`).
 
@@ -139,6 +139,3 @@ The project uses `movies_cleaned.csv` — a pre-cleaned movie dataset with `titl
 
 ---
 
-## 📄 License
-
-This project is open source and available under the [MIT License](LICENSE).
