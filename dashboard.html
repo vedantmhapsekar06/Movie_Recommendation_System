@@ -1,0 +1,669 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Movie Recommendation System</title>
+<style>
+  :root {
+    --bg:       #0d1117;
+    --surface:  #161b22;
+    --card:     #1c2330;
+    --border:   #30363d;
+    --accent:   #2f81f7;
+    --accent2:  #1f6feb;
+    --green:    #3fb950;
+    --yellow:   #d29922;
+    --text:     #e6edf3;
+    --muted:    #8b949e;
+    --pill-bg:  #21262d;
+    --radius:   10px;
+    --font:     'Segoe UI', system-ui, sans-serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: var(--font);
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 0;
+  }
+
+  /* ── TOP NAV ── */
+  nav {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 14px 32px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  nav .logo {
+    font-size: 17px;
+    font-weight: 600;
+    color: var(--text);
+    letter-spacing: -.3px;
+  }
+  nav .logo span { color: var(--accent); }
+  nav .badges { display: flex; gap: 8px; margin-left: auto; flex-wrap: wrap; }
+  .badge {
+    font-size: 11px;
+    padding: 3px 10px;
+    border-radius: 20px;
+    border: 1px solid var(--border);
+    background: var(--pill-bg);
+    color: var(--muted);
+    font-weight: 500;
+  }
+  .badge.blue  { border-color: #1f6feb55; background: #1f6feb18; color: #79c0ff; }
+  .badge.green { border-color: #3fb95055; background: #3fb95018; color: #7ee787; }
+
+  /* ── STATUS BAR ── */
+  #status-bar {
+    font-size: 12px;
+    text-align: center;
+    padding: 8px;
+    background: #1f2d1f;
+    color: #7ee787;
+    border-bottom: 1px solid #2d3f2d;
+    display: none;
+  }
+  #status-bar.error {
+    background: #2d1f1f;
+    color: #f85149;
+    border-color: #3f2d2d;
+  }
+
+  /* ── LAYOUT ── */
+  .main { max-width: 1200px; margin: 0 auto; padding: 28px 24px; }
+
+  /* ── METRICS ── */
+  .metrics {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+  .metric {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px 18px;
+  }
+  .metric-label { font-size: 12px; color: var(--muted); margin-bottom: 6px; }
+  .metric-value { font-size: 26px; font-weight: 600; color: var(--text); }
+  .metric-sub   { font-size: 11px; color: var(--muted); margin-top: 3px; }
+
+  /* ── PIPELINE ── */
+  .pipeline {
+    display: flex;
+    align-items: stretch;
+    gap: 0;
+    margin-bottom: 24px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+  .pipe-step {
+    flex: 1;
+    background: var(--card);
+    padding: 14px 16px;
+    border-right: 1px solid var(--border);
+    position: relative;
+  }
+  .pipe-step:last-child { border-right: none; }
+  .pipe-num    { font-size: 10px; color: var(--accent); font-weight: 600; margin-bottom: 4px; letter-spacing: .5px; }
+  .pipe-name   { font-size: 13px; font-weight: 600; color: var(--text); }
+  .pipe-detail { font-size: 11px; color: var(--muted); margin-top: 3px; }
+
+  /* ── TWO-COL GRID ── */
+  .grid2 {
+    display: grid;
+    grid-template-columns: 1.3fr 0.7fr;
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+
+  /* ── CARDS ── */
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 18px 20px;
+  }
+  .card-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--muted);
+    margin-bottom: 14px;
+    text-transform: uppercase;
+    letter-spacing: .6px;
+  }
+
+  /* ── GENRE BARS ── */
+  .genre-row { display: flex; align-items: center; gap: 10px; margin-bottom: 9px; }
+  .genre-name { font-size: 12px; color: var(--text); width: 88px; flex-shrink: 0; }
+  .genre-bar-bg  { flex: 1; background: var(--border); border-radius: 99px; height: 7px; }
+  .genre-bar-fill { height: 7px; border-radius: 99px; background: var(--accent); transition: width .6s ease; }
+  .genre-count { font-size: 11px; color: var(--muted); width: 44px; text-align: right; flex-shrink: 0; }
+
+  /* ── LEGEND ── */
+  .legend-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+  .legend-bar  { width: 32px; height: 6px; border-radius: 99px; flex-shrink: 0; }
+  .legend-text { font-size: 12px; color: var(--muted); }
+
+  /* ── SEARCH ── */
+  .search-wrap {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 18px 20px;
+    margin-bottom: 24px;
+  }
+  .search-row { display: flex; gap: 10px; position: relative; }
+  .search-row input {
+    flex: 1;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 14px;
+    color: var(--text);
+    font-size: 14px;
+    outline: none;
+    font-family: var(--font);
+  }
+  .search-row input:focus { border-color: var(--accent); }
+  .search-row select {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 12px;
+    color: var(--text);
+    font-size: 13px;
+    outline: none;
+    cursor: pointer;
+    font-family: var(--font);
+    min-width: 88px;
+  }
+  .btn {
+    background: var(--accent);
+    border: none;
+    border-radius: 8px;
+    padding: 10px 20px;
+    color: #fff;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: var(--font);
+    transition: background .15s;
+    white-space: nowrap;
+  }
+  .btn:hover { background: var(--accent2); }
+  .btn:disabled { background: var(--border); cursor: not-allowed; }
+
+  /* ── AUTOCOMPLETE ── */
+  .ac-wrapper { position: relative; flex: 1; }
+  #autocomplete {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    right: 0;
+    background: #1c2330;
+    border: 1px solid var(--accent);
+    border-radius: 10px;
+    max-height: 280px;
+    overflow-y: auto;
+    z-index: 9999;
+    display: none;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+  }
+  #autocomplete::-webkit-scrollbar { width: 5px; }
+  #autocomplete::-webkit-scrollbar-track { background: transparent; }
+  #autocomplete::-webkit-scrollbar-thumb { background: var(--border); border-radius: 99px; }
+  .ac-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 14px;
+    font-size: 13px;
+    cursor: pointer;
+    color: var(--text);
+    border-bottom: 1px solid var(--border);
+    transition: background .1s;
+    gap: 10px;
+  }
+  .ac-item:last-child { border-bottom: none; }
+  .ac-item:hover, .ac-item.focused { background: #2f3742; }
+  .ac-item-title { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .ac-item-title mark {
+    background: transparent;
+    color: var(--accent);
+    font-weight: 600;
+  }
+  .ac-item-genre {
+    font-size: 11px;
+    color: var(--muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 160px;
+    flex-shrink: 0;
+  }
+  .ac-count {
+    font-size: 11px;
+    color: var(--muted);
+    padding: 6px 14px;
+    border-bottom: 1px solid var(--border);
+    background: #161b22;
+    border-radius: 10px 10px 0 0;
+  }
+  #autocomplete .ac-genre { font-size: 11px; color: var(--muted); margin-left: 8px; }
+
+  /* ── RESULTS ── */
+  .result-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 14px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border);
+  }
+  .result-selected { font-size: 13px; color: var(--muted); }
+  .result-selected strong { color: var(--text); }
+
+  .results-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 12px;
+  }
+  .movie-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px;
+    transition: border-color .15s, transform .1s;
+  }
+  .movie-card:hover { border-color: var(--accent); transform: translateY(-1px); }
+  .movie-rank    { font-size: 11px; color: var(--accent); font-weight: 600; margin-bottom: 6px; }
+  .movie-title   { font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 5px; line-height: 1.35; }
+  .movie-genres  { font-size: 11px; color: var(--muted); line-height: 1.5; margin-bottom: 10px; }
+  .score-bar-bg  { background: var(--border); border-radius: 99px; height: 4px; margin-bottom: 4px; }
+  .score-bar-fill { height: 4px; border-radius: 99px; transition: width .4s ease; }
+  .score-text    { font-size: 11px; color: var(--accent); font-weight: 600; }
+
+  .empty-state {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--muted);
+    font-size: 14px;
+  }
+  .empty-icon { font-size: 36px; margin-bottom: 10px; }
+
+  /* ── LOADING SPINNER ── */
+  .spinner {
+    width: 18px; height: 18px;
+    border: 2px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin .6s linear infinite;
+    display: inline-block;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ── SETUP GUIDE ── */
+  .setup-guide {
+    background: #161b22;
+    border: 1px solid #30363d;
+    border-radius: var(--radius);
+    padding: 20px 24px;
+    margin-bottom: 24px;
+  }
+  .setup-guide h3 { font-size: 14px; color: #79c0ff; margin-bottom: 12px; }
+  .setup-guide ol { padding-left: 18px; }
+  .setup-guide li { font-size: 13px; color: var(--muted); margin-bottom: 8px; line-height: 1.5; }
+  .setup-guide code {
+    background: var(--pill-bg);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 1px 6px;
+    font-family: 'Courier New', monospace;
+    font-size: 12px;
+    color: #e6edf3;
+  }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 800px) {
+    .metrics { grid-template-columns: repeat(2, 1fr); }
+    .grid2   { grid-template-columns: 1fr; }
+    .pipeline { flex-direction: column; }
+    .pipe-step { border-right: none; border-bottom: 1px solid var(--border); }
+    .pipe-step:last-child { border-bottom: none; }
+  }
+  @media (max-width: 500px) {
+    .metrics { grid-template-columns: 1fr 1fr; }
+    nav .badges { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="logo">🎬 Movie<span>Rec</span></div>
+  <div class="badges">
+    <span class="badge blue">TF-IDF Vectorization</span>
+    <span class="badge blue">Cosine Similarity</span>
+    <span class="badge green">Content-Based Filtering</span>
+  </div>
+</nav>
+
+<!-- STATUS BAR -->
+<div id="status-bar"></div>
+
+<div class="main">
+
+  <!-- SETUP GUIDE (hidden by default since Flask serves this) -->
+  <div class="setup-guide" id="setup-guide" style="display:none;">
+    <h3>🚀 Quick Setup — Run your backend first</h3>
+    <ol>
+      <li>Make sure <code>app.py</code> and <code>movies_cleaned.csv</code> are in the same folder.</li>
+      <li>Install dependencies: <code>pip install flask flask-cors pandas scikit-learn</code></li>
+      <li>Start the server: <code>python app.py</code></li>
+      <li>Open <code>dashboard.html</code> in your browser — it will auto-connect.</li>
+    </ol>
+  </div>
+
+  <!-- METRICS -->
+  <div class="metrics">
+    <div class="metric">
+      <div class="metric-label">Total movies</div>
+      <div class="metric-value" id="m-total">—</div>
+      <div class="metric-sub">after cleaning</div>
+    </div>
+    <div class="metric">
+      <div class="metric-label">Algorithm</div>
+      <div class="metric-value" style="font-size:18px;padding-top:4px;">TF-IDF</div>
+      <div class="metric-sub">genre tokenization</div>
+    </div>
+    <div class="metric">
+      <div class="metric-label">Similarity metric</div>
+      <div class="metric-value" style="font-size:18px;padding-top:4px;">Cosine</div>
+      <div class="metric-sub">pairwise matrix</div>
+    </div>
+    <div class="metric">
+      <div class="metric-label">Top genres</div>
+      <div class="metric-value" style="font-size:18px;padding-top:4px;" id="m-genre">—</div>
+      <div class="metric-sub">most common</div>
+    </div>
+  </div>
+
+  <!-- PIPELINE -->
+  <div class="pipeline">
+    <div class="pipe-step"><div class="pipe-num">01</div><div class="pipe-name">Load CSV</div><div class="pipe-detail">movies_cleaned.csv</div></div>
+    <div class="pipe-step"><div class="pipe-num">02</div><div class="pipe-name">Preprocess</div><div class="pipe-detail">Drop nulls · tokenize genres</div></div>
+    <div class="pipe-step"><div class="pipe-num">03</div><div class="pipe-name">TF-IDF</div><div class="pipe-detail">Vectorize genre tokens</div></div>
+    <div class="pipe-step"><div class="pipe-num">04</div><div class="pipe-name">Similarity</div><div class="pipe-detail">Cosine pairwise matrix</div></div>
+    <div class="pipe-step" style="border-right:none;"><div class="pipe-num">05</div><div class="pipe-name">Recommend</div><div class="pipe-detail">Ranked top-N results</div></div>
+  </div>
+
+  <!-- GENRE CHART + LEGEND -->
+  <div class="grid2">
+    <div class="card">
+      <div class="card-title">Genre distribution (from your dataset)</div>
+      <div id="genre-bars"><div style="color:var(--muted);font-size:13px;">Connect backend to load...</div></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Similarity score guide</div>
+      <div class="legend-row"><div class="legend-bar" style="background:#2f81f7;"></div><div class="legend-text">1.0 — identical genre mix</div></div>
+      <div class="legend-row"><div class="legend-bar" style="background:#58a6ff;"></div><div class="legend-text">0.7–0.9 — strong genre overlap</div></div>
+      <div class="legend-row"><div class="legend-bar" style="background:#79c0ff;"></div><div class="legend-text">0.4–0.6 — partial match</div></div>
+      <div class="legend-row"><div class="legend-bar" style="background:#388bfd44;"></div><div class="legend-text">0.1–0.3 — loose similarity</div></div>
+      <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--border);">
+        <div class="card-title" style="margin-bottom:8px;">How it works</div>
+        <p style="font-size:12px;color:var(--muted);line-height:1.7;">Genres are converted to TF-IDF vectors. Cosine similarity measures the angle between them — 1.0 means parallel (same genres), 0 means no shared genres at all.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- SEARCH -->
+  <div class="search-wrap">
+    <div class="card-title" style="margin-bottom:12px;">Find similar movies</div>
+    <div class="search-row">
+      <div class="ac-wrapper">
+        <input type="text" id="movie-input" placeholder="Type a movie name, e.g. Avengers, Toy Story, Batman..." autocomplete="off" spellcheck="false" />
+        <div id="autocomplete"></div>
+      </div>
+      <select id="topN-select">
+        <option value="3">Top 3</option>
+        <option value="5" selected>Top 5</option>
+        <option value="8">Top 8</option>
+        <option value="10">Top 10</option>
+      </select>
+      <button class="btn" id="search-btn" onclick="runSearch()">Get Recommendations</button>
+    </div>
+  </div>
+
+  <!-- RESULTS -->
+  <div class="card" id="results-card">
+    <div id="result-header-wrap" style="display:none;" class="result-header">
+      <div class="result-selected">
+        Showing recommendations for <strong id="selected-title"></strong>
+        &nbsp;·&nbsp; <span id="selected-genres" style="color:var(--accent);font-size:12px;"></span>
+      </div>
+      <div style="font-size:11px;color:var(--muted);" id="result-count"></div>
+    </div>
+    <div id="results-area">
+      <div class="empty-state">
+        <div class="empty-icon">🎬</div>
+        Search for a movie above to see recommendations
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const API = '';
+let allTitles = [];
+
+// ── Fetch stats ──────────────────────────────────────────────────────────────
+async function loadStats() {
+  try {
+    const res = await fetch(`${API}/api/stats`);
+    if (!res.ok) throw new Error('offline');
+    const data = await res.json();
+
+    document.getElementById('m-total').textContent = data.total_movies.toLocaleString();
+    document.getElementById('m-genre').textContent  = data.genres[0]?.name || '—';
+
+    const max = data.genres[0]?.count || 1;
+    const colors = ['#2f81f7','#3fb950','#d29922','#f78166','#79c0ff','#7ee787','#ff7b72','#ffa657','#a5d6ff','#d2a8ff'];
+    document.getElementById('genre-bars').innerHTML = data.genres.map((g, i) => `
+      <div class="genre-row">
+        <span class="genre-name">${g.name}</span>
+        <div class="genre-bar-bg">
+          <div class="genre-bar-fill" style="width:${(g.count/max*100).toFixed(1)}%;background:${colors[i]};"></div>
+        </div>
+        <span class="genre-count">${(g.count/1000).toFixed(1)}k</span>
+      </div>`).join('');
+
+    setStatus('✅ Backend connected — ' + data.total_movies.toLocaleString() + ' movies loaded', false);
+    document.getElementById('setup-guide').style.display = 'none';
+  } catch {
+    setStatus('⚠️  Backend not connected. Run: python app.py — then refresh this page.', true);
+  }
+}
+
+// ── Fetch all titles + genres for autocomplete ────────────────────────────────
+async function loadTitles() {
+  try {
+    const res = await fetch(`${API}/api/movies`);
+    if (res.ok) {
+      const data = await res.json();
+      // data is now [{title, genres}, ...]
+      allTitles = data.map(m => m.title);
+      data.forEach(m => { titleGenreMap[m.title] = m.genres; });
+    }
+  } catch {}
+}
+
+// ── Status bar ───────────────────────────────────────────────────────────────
+function setStatus(msg, isError) {
+  const bar = document.getElementById('status-bar');
+  bar.textContent = msg;
+  bar.style.display = 'block';
+  bar.className = isError ? 'error' : '';
+}
+
+// ── Autocomplete ─────────────────────────────────────────────────────────────
+const input  = document.getElementById('movie-input');
+const acBox  = document.getElementById('autocomplete');
+let acMatches = [];
+let acFocused = -1;
+// Map title → genres for quick lookup (populated after loadTitles)
+let titleGenreMap = {};
+
+function highlight(text, query) {
+  if (!query) return text;
+  const idx = text.toLowerCase().indexOf(query.toLowerCase());
+  if (idx === -1) return text;
+  return text.slice(0, idx) +
+    '<mark>' + text.slice(idx, idx + query.length) + '</mark>' +
+    text.slice(idx + query.length);
+}
+
+function showDropdown(q) {
+  if (q.length < 1 || !allTitles.length) { hideDropdown(); return; }
+  acMatches = allTitles
+    .filter(t => t.toLowerCase().includes(q.toLowerCase()))
+    .slice(0, 12);
+  if (!acMatches.length) { hideDropdown(); return; }
+  acFocused = -1;
+  acBox.innerHTML =
+    `<div class="ac-count">${acMatches.length === 12 ? '12+ matches' : acMatches.length + ' match' + (acMatches.length > 1 ? 'es' : '')} for "<strong>${q}</strong>"</div>` +
+    acMatches.map((t, i) => {
+      const genre = (titleGenreMap[t] || '').replace(/\|/g, ' · ');
+      return `<div class="ac-item" data-idx="${i}" onmousedown="selectTitle('${t.replace(/\\/g,'\\\\').replace(/'/g,"\\'")}')" onmouseover="setFocus(${i})">
+        <span class="ac-item-title">${highlight(t, q)}</span>
+        <span class="ac-item-genre">${genre}</span>
+      </div>`;
+    }).join('');
+  acBox.style.display = 'block';
+}
+
+function hideDropdown() {
+  acBox.style.display = 'none';
+  acFocused = -1;
+}
+
+function setFocus(idx) {
+  acFocused = idx;
+  acBox.querySelectorAll('.ac-item').forEach((el, i) => {
+    el.classList.toggle('focused', i === idx);
+  });
+}
+
+input.addEventListener('input', () => {
+  const q = input.value.trim();
+  showDropdown(q);
+});
+
+input.addEventListener('keydown', e => {
+  if (acBox.style.display === 'none') {
+    if (e.key === 'Enter') runSearch();
+    return;
+  }
+  if (e.key === 'ArrowDown') {
+    e.preventDefault();
+    setFocus(Math.min(acFocused + 1, acMatches.length - 1));
+  } else if (e.key === 'ArrowUp') {
+    e.preventDefault();
+    setFocus(Math.max(acFocused - 1, 0));
+  } else if (e.key === 'Enter') {
+    e.preventDefault();
+    if (acFocused >= 0 && acMatches[acFocused]) {
+      selectTitle(acMatches[acFocused]);
+    } else {
+      hideDropdown();
+      runSearch();
+    }
+  } else if (e.key === 'Escape') {
+    hideDropdown();
+  }
+});
+
+// Close on outside click
+document.addEventListener('mousedown', e => {
+  if (!e.target.closest('.ac-wrapper')) hideDropdown();
+});
+
+function selectTitle(title) {
+  input.value = title;
+  hideDropdown();
+  runSearch();
+}
+
+// ── Run search ───────────────────────────────────────────────────────────────
+async function runSearch() {
+  const query = input.value.trim();
+  const topN  = document.getElementById('topN-select').value;
+  if (!query) return;
+
+  const area = document.getElementById('results-area');
+  const hdr  = document.getElementById('result-header-wrap');
+  const btn  = document.getElementById('search-btn');
+
+  area.innerHTML = `<div class="empty-state"><div class="spinner"></div><br><br>Fetching recommendations...</div>`;
+  hdr.style.display = 'none';
+  btn.disabled = true;
+
+  try {
+    const res  = await fetch(`${API}/api/recommend?movie=${encodeURIComponent(query)}&n=${topN}`);
+    const data = await res.json();
+    btn.disabled = false;
+
+    if (!res.ok) {
+      area.innerHTML = `<div class="empty-state"><div class="empty-icon">🔍</div>Movie not found. Try a different title or check spelling.<br><br><small style="color:var(--muted)">Tip: use the autocomplete to pick an exact title</small></div>`;
+      hdr.style.display = 'none';
+      return;
+    }
+
+    document.getElementById('selected-title').textContent  = data.selected.title;
+    document.getElementById('selected-genres').textContent = data.selected.genres.replace(/\|/g, ' · ');
+    document.getElementById('result-count').textContent    = `${data.recommendations.length} results`;
+    hdr.style.display = 'flex';
+
+    const colors = ['#2f81f7','#58a6ff','#79c0ff','#388bfd','#1f6feb'];
+    area.innerHTML = `<div class="results-grid">
+      ${data.recommendations.map((m, i) => {
+        const pct = (m.score * 100).toFixed(0);
+        const col = m.score >= 0.9 ? '#2f81f7' : m.score >= 0.7 ? '#58a6ff' : m.score >= 0.4 ? '#79c0ff' : '#388bfd44';
+        return `
+        <div class="movie-card">
+          <div class="movie-rank">#${i + 1}</div>
+          <div class="movie-title">${m.title}</div>
+          <div class="movie-genres">${m.genres.replace(/\|/g, ' · ')}</div>
+          <div class="score-bar-bg">
+            <div class="score-bar-fill" style="width:${pct}%;background:${col};"></div>
+          </div>
+          <div class="score-text">Similarity: ${m.score.toFixed(4)}</div>
+        </div>`;
+      }).join('')}
+    </div>`;
+  } catch {
+    btn.disabled = false;
+    area.innerHTML = `<div class="empty-state"><div class="empty-icon">❌</div>Backend not reachable.<br><br><code style="font-size:12px;background:#21262d;padding:4px 10px;border-radius:6px;color:#e6edf3;">python app.py</code><br><br><small style="color:var(--muted)">Run the command above in your terminal, then try again.</small></div>`;
+  }
+}
+
+// ── Init ─────────────────────────────────────────────────────────────────────
+loadStats();
+loadTitles();
+</script>
+</body>
+</html>
